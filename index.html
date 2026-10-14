@@ -1,0 +1,570 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>青嶼茶舖｜掃碼點飲料</title>
+<meta name="description" content="青嶼茶舖手機點餐：選飲料、領優惠、模擬付款，到店直接取。">
+<meta name="theme-color" content="#24533F">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 32 32%22%3E%3Ccircle cx=%2216%22 cy=%2216%22 r=%2215%22 fill=%22%2324533F%22/%3E%3Cpath d=%22M9 21c0-7 5-11 14-12-1 8-5 13-12 13 2-4 5-6 8-8%22 fill=%22none%22 stroke=%22%23D9A441%22 stroke-width=%222.2%22 stroke-linecap=%22round%22/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&family=Noto+Serif+TC:wght@700;900&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<style>
+:root{
+  --paper:#EDF1EA;      /* 淡茶湯底色 */
+  --card:#FFFFFF;
+  --ink:#17231C;
+  --muted:#5B6B61;
+  --leaf:#24533F;       /* 茶葉綠 */
+  --leaf-soft:#D6E3D9;
+  --amber:#D9A441;      /* 烏龍琥珀 */
+  --stamp:#B8392E;      /* 優惠章紅 */
+  --line:#CBD6CD;
+  --serif:"Noto Serif TC",serif;
+  --sans:"Noto Sans TC",system-ui,sans-serif;
+}
+*{box-sizing:border-box;margin:0}
+html{-webkit-text-size-adjust:100%}
+body{background:var(--paper);color:var(--ink);font:400 16px/1.65 var(--sans)}
+button,input{font:inherit;color:inherit}
+button{cursor:pointer;border:0;background:none}
+:focus-visible{outline:3px solid var(--amber);outline-offset:2px}
+.wrap{max-width:480px;margin:0 auto;padding:0 16px 120px;background:var(--paper);min-height:100vh}
+
+/* header */
+.top{position:sticky;top:0;z-index:20;display:flex;align-items:center;justify-content:space-between;
+  padding:12px 16px;margin:0 -16px;background:rgba(237,241,234,.94);backdrop-filter:blur(8px);border-bottom:1px solid var(--line)}
+.brand{display:flex;align-items:center;gap:10px;font:900 20px/1 var(--serif);letter-spacing:.06em}
+.brand svg{width:30px;height:30px}
+.cart-btn{position:relative;display:flex;align-items:center;gap:6px;padding:8px 14px;border-radius:999px;background:var(--card);border:1px solid var(--line);font-weight:500;font-size:15px}
+.cart-btn b{min-width:22px;height:22px;border-radius:11px;background:var(--leaf);color:#fff;font-size:13px;display:grid;place-items:center;padding:0 6px}
+
+/* hero */
+.hero{padding:28px 0 8px;display:grid;grid-template-columns:1fr 132px;gap:8px;align-items:end}
+.hero h1{font:900 34px/1.22 var(--serif);letter-spacing:.02em}
+.hero p{color:var(--muted);margin-top:10px;font-size:15px}
+.hero-cups{position:relative;height:190px}
+.hero-cups svg{position:absolute;bottom:0}
+.hero-cups svg:nth-child(1){left:-6px;width:78px;transform:rotate(-8deg)}
+.hero-cups svg:nth-child(2){right:-4px;width:96px;z-index:1}
+.hero-actions{display:flex;gap:10px;margin:20px 0 4px}
+.btn{text-decoration:none;display:inline-flex;align-items:center;justify-content:center;gap:6px;min-height:46px;padding:0 20px;border-radius:12px;font-weight:700}
+.btn-main{background:var(--leaf);color:#fff}
+.btn-ghost{color:var(--ink);background:var(--card);border:1px solid var(--line)}
+.btn[disabled]{opacity:.45;cursor:not-allowed}
+.open-note{font-size:13px;color:var(--muted);margin-top:10px;display:flex;align-items:center;gap:6px}
+.open-note i{width:8px;height:8px;border-radius:50%;background:#3E9B62;display:inline-block}
+
+section{margin-top:36px}
+h2{font:700 22px/1.3 var(--serif);margin-bottom:6px}
+.sub{color:var(--muted);font-size:14px;margin-bottom:14px}
+
+/* coupon ticket — the one bold element */
+.ticket{position:relative;display:grid;grid-template-columns:1fr 108px;background:var(--leaf);color:#fff;border-radius:16px;overflow:hidden;margin-top:28px}
+.ticket::before,.ticket::after{content:"";position:absolute;left:calc(100% - 108px);width:22px;height:22px;border-radius:50%;background:var(--paper);transform:translateX(-50%)}
+.ticket::before{top:-11px}.ticket::after{bottom:-11px}
+.ticket-main{padding:18px 18px 18px 20px}
+.ticket-main small{font-size:13px;opacity:.8}
+.ticket-main strong{display:block;font:900 30px/1.15 var(--serif);margin:4px 0 6px;letter-spacing:.04em}
+.ticket-main span{font-size:13px;opacity:.85;display:block}
+.ticket-side{border-left:2px dashed rgba(255,255,255,.35);display:grid;place-items:center;padding:12px}
+.claim{width:100%;min-height:72px;border-radius:10px;background:var(--amber);color:var(--ink);font-weight:700;line-height:1.3;font-size:15px}
+.stamp{display:none;width:84px;height:84px;border-radius:50%;border:3px solid #F3C6C0;color:#FBE3DF;font:900 17px/1.15 var(--serif);
+  place-items:center;text-align:center;transform:rotate(-14deg);background:var(--stamp)}
+.ticket.claimed .claim{display:none}
+.ticket.claimed .stamp{display:grid;animation:stampIn .35s cubic-bezier(.2,1.6,.4,1)}
+@keyframes stampIn{from{transform:rotate(-14deg) scale(1.8);opacity:0}}
+
+/* quiz */
+.quiz{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:18px}
+.q{border:0;padding:0;margin:0 0 16px}
+.q legend{font-weight:700;margin-bottom:8px;font-size:15px}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{position:relative}
+.chip input{position:absolute;opacity:0;inset:0}
+.chip span{display:block;padding:8px 14px;border-radius:999px;border:1px solid var(--line);background:var(--paper);font-size:15px}
+.chip input:checked+span{background:var(--leaf);border-color:var(--leaf);color:#fff}
+.chip input:focus-visible+span{outline:3px solid var(--amber);outline-offset:2px}
+.rec{margin-top:6px;display:grid;gap:10px}
+.rec-item{display:grid;grid-template-columns:64px 1fr auto;gap:12px;align-items:center;padding:12px;border-radius:12px;background:var(--leaf-soft)}
+.rec-item svg{width:64px}
+.rec-item h3{font-size:16px}
+.rec-item p{font-size:13px;color:var(--muted);line-height:1.5}
+.rec-empty{font-size:14px;color:var(--muted)}
+
+/* menu */
+.menu{display:grid;gap:2px;background:var(--line);border-radius:16px;overflow:hidden;border:1px solid var(--line)}
+.item{display:grid;grid-template-columns:76px 1fr;gap:14px;padding:16px 14px;background:var(--card)}
+.item svg{width:76px;height:auto}
+.item h3{font-size:17px;line-height:1.35}
+.item p{font-size:14px;color:var(--muted);margin:3px 0 10px;line-height:1.55}
+.item-foot{display:flex;align-items:center;justify-content:space-between}
+.price{font:700 19px/1 var(--serif)}
+.price small{font:500 13px var(--sans);color:var(--muted);margin-right:2px}
+.add{min-height:38px;padding:0 16px;border-radius:10px;background:var(--leaf);color:#fff;font-weight:700;font-size:15px}
+.tag{display:inline-block;font-size:12px;padding:1px 8px;border-radius:6px;background:#FBEFD6;color:#7A5410;margin-left:6px;vertical-align:2px;font-weight:500}
+
+/* assistant */
+.chat{background:var(--card);border:1px solid var(--line);border-radius:16px;overflow:hidden}
+.chat-log{padding:14px;display:grid;gap:10px;max-height:420px;overflow-y:auto}
+.msg{max-width:88%;padding:10px 13px;border-radius:14px;font-size:15px;line-height:1.6}
+.msg.bot{background:var(--paper);border-top-left-radius:4px}
+.msg.me{background:var(--leaf);color:#fff;justify-self:end;border-top-right-radius:4px}
+.msg ul{padding-left:18px;margin:6px 0}
+.msg li{margin:4px 0}
+.msg .mini-add{margin-top:4px;padding:3px 10px;border-radius:8px;background:var(--leaf);color:#fff;font-size:13px;font-weight:700}
+.examples{display:flex;gap:8px;overflow-x:auto;padding:0 14px 10px;scrollbar-width:none}
+.examples button{flex:none;font-size:13px;padding:6px 12px;border-radius:999px;border:1px solid var(--line);background:var(--paper)}
+.chat-form{display:flex;gap:8px;padding:10px;border-top:1px solid var(--line)}
+.chat-form input{flex:1;min-width:0;min-height:44px;padding:0 12px;border-radius:10px;border:1px solid var(--line);background:var(--paper)}
+.typing{display:inline-flex;gap:4px}
+.typing i{width:6px;height:6px;border-radius:50%;background:var(--muted);animation:blink 1s infinite}
+.typing i:nth-child(2){animation-delay:.15s}.typing i:nth-child(3){animation-delay:.3s}
+@keyframes blink{50%{opacity:.25}}
+
+footer{margin-top:40px;font-size:13px;color:var(--muted);line-height:1.8}
+
+/* sticky cart bar */
+.bar{position:fixed;left:0;right:0;bottom:0;z-index:30;padding:10px 16px calc(10px + env(safe-area-inset-bottom));transform:translateY(110%);transition:transform .25s}
+.bar.show{transform:none}
+.bar button{display:flex;width:100%;max-width:448px;margin:0 auto;align-items:center;justify-content:space-between;min-height:54px;padding:0 18px;border-radius:14px;background:var(--ink);color:#fff;font-weight:700;box-shadow:0 8px 24px rgba(23,35,28,.28)}
+
+/* bottom sheets */
+.scrim{position:fixed;inset:0;z-index:40;background:rgba(23,35,28,.45);opacity:0;pointer-events:none;transition:opacity .2s}
+.scrim.show{opacity:1;pointer-events:auto}
+.sheet{position:fixed;left:0;right:0;bottom:0;z-index:50;max-width:480px;margin:0 auto;max-height:92vh;overflow-y:auto;background:var(--card);
+  border-radius:20px 20px 0 0;padding:8px 18px calc(20px + env(safe-area-inset-bottom));transform:translateY(105%);visibility:hidden;transition:transform .28s cubic-bezier(.2,.8,.3,1),visibility 0s .28s}
+.sheet.show{transform:none;visibility:visible;transition:transform .28s cubic-bezier(.2,.8,.3,1)}
+.grab{width:40px;height:4px;border-radius:2px;background:var(--line);margin:4px auto 12px}
+.sheet h2{margin-bottom:12px}
+.sheet-head{display:flex;justify-content:space-between;align-items:center}
+.close{width:40px;height:40px;border-radius:50%;background:var(--paper);font-size:20px;line-height:1}
+.opt-top{display:grid;grid-template-columns:72px 1fr;gap:14px;align-items:center;margin-bottom:14px}
+.opt-top svg{width:72px}
+.qty{display:flex;align-items:center;gap:14px;margin:4px 0 18px}
+.qty button{width:40px;height:40px;border-radius:10px;border:1px solid var(--line);font-size:20px}
+.qty output{font:700 20px var(--serif);min-width:24px;text-align:center}
+.wide{width:100%;min-height:52px;border-radius:14px;font-size:17px}
+
+/* steps — this really is a sequence */
+.steps{display:flex;gap:6px;margin:0 0 16px;padding:0;list-style:none;font-size:13px;color:var(--muted)}
+.steps li{flex:1;text-align:center;padding-top:8px;border-top:3px solid var(--line)}
+.steps li.on{border-color:var(--leaf);color:var(--ink);font-weight:700}
+.lines{list-style:none;padding:0;margin-bottom:14px}
+.lines li{display:grid;grid-template-columns:1fr auto auto;gap:10px;align-items:center;padding:12px 0;border-bottom:1px solid var(--line)}
+.lines small{display:block;color:var(--muted);font-size:13px}
+.rm{color:var(--muted);font-size:13px;padding:6px;text-decoration:underline}
+.sum{display:grid;gap:6px;font-size:15px;margin-bottom:16px}
+.sum div{display:flex;justify-content:space-between}
+.sum .off{color:var(--stamp)}
+.sum .total{font:700 22px var(--serif);border-top:1px solid var(--line);padding-top:10px;margin-top:4px}
+.coupon-row{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:12px;border-radius:12px;border:1px dashed var(--leaf);background:var(--leaf-soft);margin-bottom:12px;font-size:14px}
+.coupon-row button{font-weight:700;color:var(--leaf);text-decoration:underline;white-space:nowrap}
+.field{display:block;margin-bottom:14px;font-size:14px;font-weight:500}
+.field input{display:block;width:100%;margin-top:6px;min-height:46px;padding:0 12px;border-radius:10px;border:1px solid var(--line);background:var(--paper);font-size:16px}
+.err{color:var(--stamp);font-size:13px;min-height:1em;margin-top:4px;font-weight:400}
+.pay-methods{display:grid;gap:8px;margin-bottom:16px}
+.pay-methods label{display:flex;align-items:center;gap:10px;padding:12px;border-radius:12px;border:1px solid var(--line);font-size:15px}
+.pay-methods input{accent-color:var(--leaf);width:18px;height:18px}
+.qr-box{display:grid;justify-items:center;gap:8px;padding:18px;border-radius:16px;background:var(--paper);margin-bottom:16px;text-align:center}
+.qr-box #payQr{background:#fff;padding:10px;border-radius:10px}
+.qr-box #payQr img,.qr-box #payQr canvas{display:block;width:180px;height:180px}
+.qr-box strong{font:700 26px var(--serif)}
+.demo-flag{font-size:12px;padding:2px 10px;border-radius:999px;background:#FBEFD6;color:#7A5410}
+.done{text-align:center;padding:10px 0 4px}
+.done svg{width:76px;height:76px}
+.done h2{margin:10px 0 4px}
+.pickup{margin:18px auto;padding:14px;border-radius:16px;background:var(--leaf);color:#fff;max-width:260px}
+.pickup b{display:block;font:900 44px/1.1 var(--serif);letter-spacing:.08em}
+.receipt{text-align:left;font-size:14px;background:var(--paper);border-radius:12px;padding:12px 14px;margin-bottom:16px}
+.receipt div{display:flex;justify-content:space-between;padding:2px 0}
+.toast{position:fixed;left:50%;top:70px;z-index:60;transform:translate(-50%,-20px);opacity:0;background:var(--ink);color:#fff;padding:10px 18px;border-radius:999px;font-size:14px;transition:.25s;pointer-events:none;white-space:nowrap}
+.toast.show{opacity:1;transform:translate(-50%,0)}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <div class="brand"><svg viewBox="0 0 32 32" aria-hidden="true"><circle cx="16" cy="16" r="15" fill="#24533F"/><path d="M9 21c0-7 5-11 14-12-1 8-5 13-12 13 2-4 5-6 8-8" fill="none" stroke="#D9A441" stroke-width="2.2" stroke-linecap="round"/></svg>青嶼茶舖</div>
+    <button class="cart-btn" id="cartTop" aria-label="開啟購物車">購物車 <b id="cartCount">0</b></button>
+  </header>
+
+  <div class="hero">
+    <div>
+      <h1>手機點一杯，到店直接拿</h1>
+      <p>大學側門旁的手搖茶。先在這裡點好、付好，下課走過來不用排隊。</p>
+    </div>
+    <div class="hero-cups" id="heroCups" aria-hidden="true"></div>
+  </div>
+  <div class="hero-actions">
+    <a class="btn btn-main" href="#quiz">幫我選一杯</a>
+    <a class="btn btn-ghost" href="#menu">看全部菜單</a>
+  </div>
+  <p class="open-note"><i></i>營業中 10:30–21:00，點完約 8 分鐘可取</p>
+
+  <div class="ticket" id="ticket">
+    <div class="ticket-main">
+      <small>掃碼顧客限定</small>
+      <strong>第二杯半價</strong>
+      <span>同一筆訂單兩杯以上，較便宜的一杯打五折。</span>
+    </div>
+    <div class="ticket-side">
+      <button class="claim" id="claimBtn">領取<br>優惠券</button>
+      <div class="stamp" aria-live="polite">已領取<br>結帳折抵</div>
+    </div>
+  </div>
+
+  <section id="quiz">
+    <h2>不知道喝什麼？回答三題</h2>
+    <p class="sub">選完馬上推薦，隨時可以改答案。</p>
+    <form class="quiz" id="quizForm">
+      <fieldset class="q"><legend>預算大概多少？</legend><div class="chips">
+        <label class="chip"><input type="radio" name="budget" value="low"><span>50 元以內</span></label>
+        <label class="chip"><input type="radio" name="budget" value="mid"><span>50–70 元</span></label>
+        <label class="chip"><input type="radio" name="budget" value="any"><span>不限</span></label>
+      </div></fieldset>
+      <fieldset class="q"><legend>想喝哪種口味？</legend><div class="chips">
+        <label class="chip"><input type="radio" name="taste" value="fruit"><span>清爽果香</span></label>
+        <label class="chip"><input type="radio" name="taste" value="milk"><span>濃郁奶香</span></label>
+        <label class="chip"><input type="radio" name="taste" value="tea"><span>喝得到茶味</span></label>
+      </div></fieldset>
+      <fieldset class="q"><legend>自己喝還是請朋友？</legend><div class="chips">
+        <label class="chip"><input type="radio" name="who" value="self"><span>自己喝</span></label>
+        <label class="chip"><input type="radio" name="who" value="gift"><span>請朋友</span></label>
+      </div></fieldset>
+      <div class="rec" id="recBox" aria-live="polite"><p class="rec-empty">三題都選好，推薦會出現在這裡。</p></div>
+    </form>
+  </section>
+
+  <section id="menu">
+    <h2>菜單</h2>
+    <p class="sub">加入購物車時可以選甜度和冰塊。</p>
+    <div class="menu" id="menuList"></div>
+  </section>
+
+  <section id="assistant">
+    <h2>問問茶舖助理</h2>
+    <p class="sub">用一句話說你的需求，助理從菜單裡幫你挑。</p>
+    <div class="chat">
+      <div class="chat-log" id="chatLog" aria-live="polite">
+        <div class="msg bot">嗨，我是茶舖助理。告訴我預算、想喝的口味、是不是要請人，我幫你配好。</div>
+      </div>
+      <div class="examples" id="examples">
+        <button type="button">我是大學生，預算 500 元，要請朋友慶生</button>
+        <button type="button">50 元以內，想喝清爽一點的</button>
+        <button type="button">想喝濃一點的奶茶，晚上要熬夜讀書</button>
+      </div>
+      <form class="chat-form" id="chatForm">
+        <input id="chatInput" placeholder="例如：預算 100，想喝不甜的" aria-label="輸入你的需求" autocomplete="off">
+        <button class="btn btn-main" type="submit">送出</button>
+      </form>
+    </div>
+  </section>
+
+  <footer>
+    青嶼茶舖（課堂作業示範店）<br>
+    這是行動商務課程的模擬商店，付款流程不會真的扣款。
+  </footer>
+</div>
+
+<div class="bar" id="bar"><button id="barBtn"><span id="barText">購物車</span><span>去結帳</span></button></div>
+<div class="toast" id="toast" role="status"></div>
+<div class="scrim" id="scrim"></div>
+
+<!-- 選規格 -->
+<div class="sheet" id="optSheet" role="dialog" aria-modal="true" aria-labelledby="optName">
+  <div class="grab"></div>
+  <div class="opt-top"><div id="optImg"></div><div><h2 id="optName" style="margin:0"></h2><div class="price" id="optPrice"></div></div></div>
+  <form id="optForm">
+    <fieldset class="q"><legend>甜度</legend><div class="chips" id="sugarChips"></div></fieldset>
+    <fieldset class="q"><legend>冰塊</legend><div class="chips" id="iceChips"></div></fieldset>
+    <div class="q"><div style="font-weight:700;font-size:15px">數量</div>
+      <div class="qty"><button type="button" id="qMinus" aria-label="減少">−</button><output id="qVal">1</output><button type="button" id="qPlus" aria-label="增加">＋</button></div></div>
+    <button class="btn btn-main wide" type="submit" id="optAdd">加入購物車</button>
+  </form>
+</div>
+
+<!-- 結帳 -->
+<div class="sheet" id="cartSheet" role="dialog" aria-modal="true" aria-labelledby="cartTitle">
+  <div class="grab"></div>
+  <div class="sheet-head"><h2 id="cartTitle">確認訂單</h2><button class="close" data-close aria-label="關閉">×</button></div>
+  <ol class="steps"><li class="on">確認訂單</li><li>付款</li><li>完成</li></ol>
+  <div id="cartBody"></div>
+</div>
+
+<!-- 付款 -->
+<div class="sheet" id="paySheet" role="dialog" aria-modal="true" aria-labelledby="payTitle">
+  <div class="grab"></div>
+  <div class="sheet-head"><h2 id="payTitle">付款</h2><button class="close" data-close aria-label="關閉">×</button></div>
+  <ol class="steps"><li class="on">確認訂單</li><li class="on">付款</li><li>完成</li></ol>
+  <div class="pay-methods" id="payMethods">
+    <label><input type="radio" name="pay" value="行動支付掃碼" checked>行動支付掃碼（LINE Pay、街口等）</label>
+    <label><input type="radio" name="pay" value="信用卡（綁定卡）">信用卡（綁定卡）</label>
+  </div>
+  <div class="qr-box">
+    <span class="demo-flag">模擬付款，不會扣款</span>
+    <div id="payQr"></div>
+    <div style="font-size:14px;color:var(--muted)">應付金額</div>
+    <strong id="payAmount"></strong>
+    <div style="font-size:13px;color:var(--muted)" id="payOrderNo"></div>
+  </div>
+  <button class="btn btn-main wide" id="payBtn">確認付款</button>
+</div>
+
+<!-- 完成 -->
+<div class="sheet" id="doneSheet" role="dialog" aria-modal="true" aria-labelledby="doneTitle">
+  <div class="grab"></div>
+  <ol class="steps"><li class="on">確認訂單</li><li class="on">付款</li><li class="on">完成</li></ol>
+  <div class="done">
+    <svg viewBox="0 0 76 76" aria-hidden="true"><circle cx="38" cy="38" r="36" fill="#24533F"/><path d="M22 39l11 11 21-23" fill="none" stroke="#fff" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    <h2 id="doneTitle">付款完成</h2>
+    <p class="sub" style="margin:0">飲料開始製作，約 8 分鐘後到店取。</p>
+    <div class="pickup">取餐號碼<b id="pickNo"></b></div>
+    <div class="receipt" id="receipt"></div>
+    <button class="btn btn-ghost wide" id="againBtn">回到菜單</button>
+  </div>
+</div>
+
+<script>
+const P = [
+  {id:'oolong-milk', name:'炭焙烏龍鮮奶', price:65, desc:'重焙烏龍加小農鮮奶，帶一點焦糖香，熱的也好喝。', taste:['milk','tea'], layers:['#B98657','#DCC1A0'], top:'none', hot:true},
+  {id:'pearl-milk', name:'黑糖珍珠鮮奶', price:70, desc:'現煮黑糖珍珠，掛壁的黑糖漿配冰鮮奶，最多人點。', taste:['milk'], layers:['#F0E3CF','#8B4A22'], top:'pearl', badge:'人氣第一'},
+  {id:'cheese-black', name:'奶蓋阿薩姆紅茶', price:65, desc:'鹹甜奶蓋壓在濃紅茶上，先喝奶蓋再攪拌。', taste:['milk','tea'], layers:['#9E3F24','#B5532E'], top:'foam'},
+  {id:'passion-green', name:'百香綠茶', price:55, desc:'整顆百香果肉加四季春綠茶，酸甜解渴。', taste:['fruit'], layers:['#E7C246','#B8C66A'], top:'seed'},
+  {id:'peach-oolong', name:'蜜桃烏龍', price:60, desc:'水蜜桃果泥加清香烏龍，果香明顯但不膩。', taste:['fruit','tea'], layers:['#F3B38D','#E8977A'], top:'none', badge:'季節限定'},
+  {id:'melon-lemon', name:'冬瓜檸檬', price:45, desc:'古早味冬瓜露加現擠檸檬，便宜又消暑。', taste:['fruit'], layers:['#D4A85C','#E9D38C'], top:'lemon'},
+  {id:'jinxuan', name:'金萱青茶', price:35, desc:'奶香調的高山金萱，無糖也順口，熱量最低。', taste:['tea'], layers:['#D6C36A','#E3D58A'], top:'none', hot:true},
+  {id:'duo', name:'好友雙杯組', price:120, desc:'黑糖珍珠鮮奶加蜜桃烏龍各一杯，附提袋，請客剛好。', taste:['milk','fruit'], layers:['#F0E3CF','#8B4A22'], top:'pearl', duo:true, badge:'請客推薦'}
+];
+const SUGAR=['正常糖','少糖','半糖','微糖','無糖'], ICE=['正常冰','少冰','微冰','去冰','溫','熱'];
+const $=s=>document.querySelector(s);
+const money=n=>'$'+n;
+let cart=[], couponClaimed=false, couponUsed=true, cur=null, qty=1, orderNo='';
+
+/* ---------- 飲料插圖 ---------- */
+function cupSVG(p, opts={}){
+  const [c1,c2]=p.layers, id='g'+p.id+(opts.k||'');
+  let top='';
+  if(p.top==='pearl') top=[...Array(9)].map((_,i)=>`<circle cx="${22+(i%5)*9+(i>4?4:0)}" cy="${101-(i>4?7:0)}" r="4.2" fill="#3B2114"/>`).join('');
+  if(p.top==='foam') top=`<path d="M17 30h56l-1.6 14H18.6z" fill="#FBF6EC"/><path d="M18.6 44c8 3 14-2 20 1s12 2 18-1 10 1 14 0" fill="none" stroke="#EFE4D0" stroke-width="2"/>`;
+  if(p.top==='seed') top=[...Array(10)].map((_,i)=>`<ellipse cx="${24+(i*17)%42}" cy="${50+(i*23)%44}" rx="2" ry="1.4" fill="#3E3115" opacity=".75"/>`).join('');
+  if(p.top==='lemon') top=`<circle cx="54" cy="56" r="10" fill="#F6E27A" stroke="#E5C53E" stroke-width="2"/><path d="M54 46v20M44 56h20M47 49l14 14M61 49L47 63" stroke="#E5C53E" stroke-width="1.2"/>`;
+  const one=(dx,sc)=>`<g transform="translate(${dx} 0) scale(${sc})">
+    <path d="M44 4l6 24" stroke="#24533F" stroke-width="5" stroke-linecap="round"/>
+    <path d="M14 26h62l-7 82a6 6 0 0 1-6 5.5H27a6 6 0 0 1-6-5.5z" fill="#fff" opacity=".55"/>
+    <clipPath id="${id}${dx}"><path d="M16 30h58l-6.7 77a5 5 0 0 1-5 4.5H27.7a5 5 0 0 1-5-4.5z"/></clipPath>
+    <g clip-path="url(#${id}${dx})"><rect x="0" y="30" width="90" height="90" fill="url(#${id}l)"/>${top}</g>
+    <path d="M14 26h62l-7 82a6 6 0 0 1-6 5.5H27a6 6 0 0 1-6-5.5z" fill="none" stroke="#17231C" stroke-opacity=".18" stroke-width="2"/>
+    <rect x="11" y="22" width="68" height="8" rx="4" fill="#24533F"/>
+  </g>`;
+  const grad=`<defs><linearGradient id="${id}l" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${c1}"/><stop offset="1" stop-color="${c2}"/></linearGradient></defs>`;
+  if(p.duo){
+    const p2={...P[4], id:p.id+'b'};
+    return `<svg viewBox="0 0 90 118" role="img" aria-label="${p.name}">${grad}<g transform="translate(30 14) scale(.68)">${cupSVG(p2,{raw:1})}</g>${one(-10,.78).replace('translate(-10 0)','translate(-2 26)')}</svg>`;
+  }
+  if(opts.raw) return grad+one(0,1);
+  return `<svg viewBox="0 0 90 118" role="img" aria-label="${p.name}">${grad}${one(0,1)}</svg>`;
+}
+
+/* ---------- 菜單 ---------- */
+function renderMenu(){
+  $('#menuList').innerHTML=P.map(p=>`<article class="item">${cupSVG(p,{k:'m'})}<div>
+    <h3>${p.name}${p.badge?`<span class="tag">${p.badge}</span>`:''}</h3><p>${p.desc}</p>
+    <div class="item-foot"><span class="price"><small>NT</small>${p.price}</span><button class="add" data-add="${p.id}">加入</button></div></div></article>`).join('');
+}
+$('#heroCups').innerHTML=cupSVG(P[3],{k:'h1'})+cupSVG(P[1],{k:'h2'});
+renderMenu();
+
+/* ---------- 規格選擇 ---------- */
+function chips(el,name,arr,def){el.innerHTML=arr.map(v=>`<label class="chip"><input type="radio" name="${name}" value="${v}" ${v===def?'checked':''}><span>${v}</span></label>`).join('')}
+function openOpt(id){
+  cur=P.find(p=>p.id===id); qty=1; $('#qVal').textContent=1;
+  $('#optImg').innerHTML=cupSVG(cur,{k:'o'}); $('#optName').textContent=cur.name; $('#optPrice').textContent=money(cur.price);
+  chips($('#sugarChips'),'sugar',SUGAR,'半糖');
+  chips($('#iceChips'),'ice',cur.hot?ICE:ICE.slice(0,5),'少冰');
+  open('#optSheet');
+}
+$('#qMinus').onclick=()=>{qty=Math.max(1,qty-1);$('#qVal').textContent=qty};
+$('#qPlus').onclick=()=>{qty=Math.min(20,qty+1);$('#qVal').textContent=qty};
+$('#optForm').onsubmit=e=>{
+  e.preventDefault();
+  const f=new FormData(e.target), sugar=f.get('sugar'), ice=f.get('ice');
+  const hit=cart.find(c=>c.id===cur.id&&c.sugar===sugar&&c.ice===ice);
+  hit?hit.qty+=qty:cart.push({id:cur.id,sugar,ice,qty});
+  closeAll(); updateCart(); toast(`已加入 ${cur.name} ×${qty}`);
+};
+document.addEventListener('click',e=>{const b=e.target.closest('[data-add]'); if(b) openOpt(b.dataset.add)});
+
+/* ---------- 購物車與優惠計算 ---------- */
+const cups=()=>cart.reduce((s,c)=>s+c.qty*(P.find(p=>p.id===c.id).duo?2:1),0);
+function calc(){
+  const sub=cart.reduce((s,c)=>s+P.find(p=>p.id===c.id).price*c.qty,0);
+  let off=0;
+  if(couponClaimed&&couponUsed&&cups()>=2){
+    // 第二杯半價：取單杯價最低者打五折（雙杯組以 60 元計單杯）
+    const unit=cart.map(c=>{const p=P.find(x=>x.id===c.id);return p.duo?p.price/2:p.price});
+    off=Math.floor(Math.min(...unit)/2);
+  }
+  return {sub,off,total:sub-off};
+}
+function updateCart(){
+  const n=cups(), {total}=calc();
+  $('#cartCount').textContent=n;
+  $('#barText').textContent=`${n} 杯　${money(total)}`;
+  $('#bar').classList.toggle('show',n>0);
+}
+function renderCart(){
+  const box=$('#cartBody');
+  if(!cart.length){box.innerHTML=`<p class="sub">購物車是空的。先到菜單挑一杯吧。</p><button class="btn btn-main wide" data-close>去看菜單</button>`;return}
+  const {sub,off,total}=calc(), n=cups();
+  let couponHtml;
+  if(!couponClaimed) couponHtml=`<div class="coupon-row"><span>你還沒領「第二杯半價」</span><button type="button" id="claimInCart">領取並使用</button></div>`;
+  else if(n<2) couponHtml=`<div class="coupon-row"><span>再加一杯就能用第二杯半價</span><button type="button" data-close>再選一杯</button></div>`;
+  else couponHtml=`<div class="coupon-row"><span>${couponUsed?'已套用':'未套用'}「第二杯半價」</span><button type="button" id="toggleCoupon">${couponUsed?'不使用':'使用'}</button></div>`;
+  box.innerHTML=`<ul class="lines">${cart.map((c,i)=>{const p=P.find(x=>x.id===c.id);return `<li><div>${p.name} ×${c.qty}<small>${c.sugar}、${c.ice}</small></div><span>${money(p.price*c.qty)}</span><button class="rm" data-rm="${i}">刪除</button></li>`}).join('')}</ul>
+  ${couponHtml}
+  <div class="sum"><div><span>小計</span><span>${money(sub)}</span></div>${off?`<div class="off"><span>第二杯半價</span><span>−${money(off)}</span></div>`:''}<div class="total"><span>合計</span><span>${money(total)}</span></div></div>
+  <label class="field">取餐人稱呼<input id="who" maxlength="12" placeholder="例如：阿明" autocomplete="nickname"><div class="err" id="whoErr"></div></label>
+  <button class="btn btn-main wide" id="toPay">下單並付款 ${money(total)}</button>`;
+  const w=$('#who'); w.value=sessionName;
+  w.oninput=()=>{sessionName=w.value; $('#whoErr').textContent=''};
+}
+let sessionName='';
+$('#cartBody').addEventListener('click',e=>{
+  const rm=e.target.closest('[data-rm]');
+  if(rm){cart.splice(+rm.dataset.rm,1);updateCart();renderCart();return}
+  if(e.target.id==='claimInCart'){claim();renderCart();return}
+  if(e.target.id==='toggleCoupon'){couponUsed=!couponUsed;updateCart();renderCart();return}
+  if(e.target.id==='toPay'){
+    if(!$('#who').value.trim()){$('#whoErr').textContent='請填取餐人稱呼，店員叫號時會用到。';$('#who').focus();return}
+    goPay();
+  }
+});
+function openCart(){renderCart();open('#cartSheet')}
+$('#cartTop').onclick=openCart; $('#barBtn').onclick=openCart;
+
+/* ---------- 優惠券 ---------- */
+function claim(){couponClaimed=true;couponUsed=true;$('#ticket').classList.add('claimed');updateCart();toast('已領取，結帳時自動折抵')}
+$('#claimBtn').onclick=claim;
+
+/* ---------- 模擬付款 ---------- */
+function goPay(){
+  const {total}=calc();
+  orderNo='QY'+Date.now().toString().slice(-8);
+  $('#payAmount').textContent=money(total);
+  $('#payOrderNo').textContent='訂單編號 '+orderNo;
+  const box=$('#payQr'); box.innerHTML='';
+  const payload=`DEMO-PAY|QINGYU-TEA|${orderNo}|TWD${total}`; // qrcodejs 不支援中文，用 ASCII
+  if(window.QRCode) new QRCode(box,{text:payload,width:180,height:180,colorDark:'#17231C',colorLight:'#ffffff',correctLevel:QRCode.CorrectLevel.M});
+  else box.textContent=payload;
+  $('#payBtn').disabled=false; $('#payBtn').textContent='確認付款';
+  closeAll(true); open('#paySheet');
+}
+$('#payBtn').onclick=()=>{
+  const b=$('#payBtn'); b.disabled=true; b.textContent='付款處理中…';
+  setTimeout(()=>{
+    const {sub,off,total}=calc(), method=document.querySelector('input[name=pay]:checked').value;
+    $('#pickNo').textContent=String(100+Math.floor(Math.random()*900));
+    $('#receipt').innerHTML=`<div><span>訂單編號</span><span>${orderNo}</span></div><div><span>取餐人</span><span>${esc(sessionName.trim())}</span></div>
+      ${cart.map(c=>{const p=P.find(x=>x.id===c.id);return `<div><span>${p.name} ×${c.qty}</span><span>${money(p.price*c.qty)}</span></div>`}).join('')}
+      ${off?`<div><span>第二杯半價</span><span>−${money(off)}</span></div>`:''}<div><span>付款方式</span><span>${method}</span></div><div><b>已付</b><b>${money(total)}</b></div>`;
+    if(off) couponClaimed=false, $('#ticket').classList.remove('claimed'); // 優惠券用掉了
+    cart=[]; updateCart(); closeAll(true); open('#doneSheet');
+  },1300);
+};
+$('#againBtn').onclick=()=>{closeAll();location.hash='#menu'};
+
+/* ---------- 三題推薦（人工推薦邏輯） ---------- */
+const BUDGET={low:50,mid:70,any:Infinity};
+function score(p,{budget,taste,who}){
+  const unit=p.duo?p.price/2:p.price;
+  if(unit>BUDGET[budget]) return -1;
+  let s=0, why=[];
+  if(p.taste.includes(taste)){s+=3; why.push({fruit:'果香清爽',milk:'奶香濃郁',tea:'茶味明顯'}[taste])}
+  if(who==='gift'){ if(p.duo){s+=4;why.push('兩杯一組附提袋，請客方便')} else if(p.badge){s+=1;why.push('店裡'+p.badge)} }
+  else if(p.duo) s-=4;
+  if(budget==='low'&&p.price<=45){s+=1;why.push('價格親民')}
+  else if(budget!=='any') why.push('在預算內')
+  why.unshift(p.desc.split('，')[0]);
+  return {s,why};
+}
+function recommend(a){
+  return P.map(p=>({p,r:score(p,a)})).filter(x=>x.r!==-1&&x.r.s>=3).sort((a,b)=>b.r.s-a.r.s||a.p.price-b.p.price).slice(0,2);
+}
+$('#quizForm').addEventListener('change',()=>{
+  const f=new FormData($('#quizForm')), a={budget:f.get('budget'),taste:f.get('taste'),who:f.get('who')};
+  if(!a.budget||!a.taste||!a.who) return;
+  const list=recommend(a), box=$('#recBox');
+  box.innerHTML=list.length?list.map(({p,r})=>`<div class="rec-item">${cupSVG(p,{k:'r'})}<div><h3>${p.name}　${money(p.price)}</h3><p>${r.why.join('、')}</p></div><button class="add" data-add="${p.id}" type="button">加入</button></div>`).join('')
+    :`<p class="rec-empty">這個預算裡沒有這種口味。預算改成「50–70 元」，或換個口味再試一次。</p>`;
+});
+
+/* ---------- 茶舖助理（依關鍵字理解需求並推薦） ---------- */
+function esc(s){return s.replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+function understand(t){
+  const num=t.match(/(\d{2,5})\s*(元|塊|圓)?/); const budget=num?+num[1]:null;
+  const gift=/送|禮|請|朋友|同學|生日|慶生|室友|社團|團購/.test(t);
+  let taste=null;
+  if(/奶|濃|拿鐵|珍珠/.test(t)) taste='milk';
+  if(/果|酸|清爽|解渴|夏天|熱死|消暑/.test(t)) taste='fruit';
+  if(/無糖|不甜|減肥|熱量|健康|純茶|茶味/.test(t)) taste='tea';
+  const late=/熬夜|讀書|提神|期末|報告/.test(t), sleep=/睡|咖啡因|晚上不/.test(t)&&!late;
+  return {budget,gift,taste,late,sleep};
+}
+function reply(t){
+  const u=understand(t), picks=[];
+  const cond=[]; if(u.budget) cond.push(`預算 ${u.budget} 元`); if(u.gift) cond.push('要請朋友');
+  if(u.taste) cond.push({milk:'喜歡奶香',fruit:'想喝清爽果香',tea:'想喝不甜、茶味重'}[u.taste]); if(u.late) cond.push('需要提神'); if(u.sleep) cond.push('晚上怕睡不著');
+  let pool=P.map(p=>{
+    let s=0,r=[];
+    if(u.taste&&p.taste.includes(u.taste)){s+=3;r.push({milk:'奶味濃',fruit:'酸甜解渴',tea:'無糖也順口'}[u.taste])}
+    if(u.gift&&p.duo){s+=4;r.push('兩杯一組附提袋，送人不用另外包')}
+    if(u.gift&&p.badge&&!p.duo){s+=1;r.push(p.badge+'，送人不容易踩雷')}
+    if(u.late&&/oolong|black|jinxuan/.test(p.id)){s+=2;r.push('茶底咖啡因較高，適合熬夜')}
+    if(u.sleep&&/melon-lemon|pearl-milk/.test(p.id)){s+=3;r.push('不含茶，晚上喝不怕睡不著')}
+    if(!u.gift&&p.duo) s-=5;
+    if(!u.taste&&!u.gift&&!u.sleep&&!u.late&&p.badge==='人氣第一'){s+=1;r.push('第一次來最多人點')}
+    return {p,s,r};
+  }).filter(x=>x.s>0).sort((a,b)=>b.s-a.s||a.p.price-b.p.price);
+  if(!pool.length) pool=[{p:P[1],s:1,r:['第一次來最多人點']},{p:P[4],s:1,r:['果香清爽，不容易喝膩']}];
+  let left=u.budget??Infinity;
+  for(const x of pool){ if(picks.length>=3) break; if(x.p.price<=left){picks.push(x);left-=x.p.price} }
+  if(!picks.length) return `${cond.length?'我理解的需求是：'+cond.join('、')+'。<br>':''}這個預算有點緊，最便宜的是金萱青茶 $35，要不要看看？<br><button class="mini-add" data-add="jinxuan">加入金萱青茶</button>`;
+  const sum=picks.reduce((s,x)=>s+x.p.price,0);
+  const list='<ul>'+picks.map(x=>`<li><b>${x.p.name}</b> ${money(x.p.price)}<br>${x.r.join('；')}<br><button class="mini-add" data-add="${x.p.id}">加入</button></li>`).join('')+'</ul>';
+  let html=cond.length?`我理解的需求是：${cond.join('、')}。<br>`:'還不知道你的喜好，先推薦店裡最多人點的。說說預算或口味，我能挑得更準。<br>';
+  if(u.gift){
+    // 請客：給一組搭配和總價
+    html+='推薦你這樣點：'+list+`合計 ${money(sum)}`+(u.budget?`，還剩 ${money(u.budget-sum)}`:'')+'。';
+    html+='<br>記得先領上面的「第二杯半價」，結帳會再便宜一點。';
+  } else {
+    // 自己喝：列出候選讓顧客挑一杯
+    html+=(picks.length>1?'可以從這幾杯挑：':'推薦你這杯：')+list;
+  }
+  if(u.gift&&u.budget&&u.budget-sum>=120) html+='<br>人多的話，剩下的預算還能再加一組好友雙杯組。';
+  return html;
+}
+function say(text){
+  const log=$('#chatLog');
+  log.insertAdjacentHTML('beforeend',`<div class="msg me">${esc(text)}</div>`);
+  const t=document.createElement('div'); t.className='msg bot'; t.innerHTML='<span class="typing"><i></i><i></i><i></i></span>'; log.append(t);
+  log.scrollTop=log.scrollHeight;
+  setTimeout(()=>{t.innerHTML=reply(text);log.scrollTop=log.scrollHeight},700);
+}
+$('#chatForm').onsubmit=e=>{e.preventDefault();const v=$('#chatInput').value.trim();if(!v)return;$('#chatInput').value='';say(v)};
+$('#examples').onclick=e=>{if(e.target.tagName==='BUTTON')say(e.target.textContent)};
+
+/* ---------- sheet 控制 ---------- */
+let lastFocus=null;
+function open(sel){lastFocus=lastFocus||document.activeElement;$('#scrim').classList.add('show');$(sel).classList.add('show');setTimeout(()=>$(sel).querySelector('button,input')?.focus({preventScroll:true}),50)}
+function closeAll(keep){document.querySelectorAll('.sheet.show').forEach(s=>s.classList.remove('show')); if(!keep){$('#scrim').classList.remove('show');lastFocus?.focus?.({preventScroll:true});lastFocus=null}}
+$('#scrim').onclick=()=>closeAll();
+document.addEventListener('click',e=>{if(e.target.closest('[data-close]'))closeAll()});
+document.addEventListener('keydown',e=>{if(e.key==='Escape')closeAll()});
+let tt; function toast(m){const t=$('#toast');t.textContent=m;t.classList.add('show');clearTimeout(tt);tt=setTimeout(()=>t.classList.remove('show'),1800)}
+</script>
+</body>
+</html>
